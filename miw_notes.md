@@ -1,6 +1,6 @@
-Vision (polished)
+# Vision 
 
-Title: MIW + portable notes: payment as data for people and agents
+## Title: MIW + portable notes: payment as data for people and agents
 
 Kushti, reading your MIW sketch alongside my Elastic Notes draft, I think we are pointing at the same missing capability. People and agents need a way to move tiny amounts of value quickly, sometimes privately, and without custodians or heavy UX. Today they cannot do this at the scales they need.
 
@@ -16,16 +16,16 @@ Two stories prove the job to be done. Person to person cash inside a circle usin
 
 If this framing is useful, I can align my write up to MIW and propose a first cut of the note schema and acceptance presets that match fast, backed, and non backed. Or, if transport first is better, I can sketch mint, transfer, and redeem events on Nostr so the wallet, the server, and relays speak the same messages.
 
-Implementation spec (polished)
+## Implementation spec 
 
-Title: MIW, Basis, and a minimal path to off chain transfer
+## Title: MIW, Basis, and a minimal path to off chain transfer
 
-Intent: describe a simple way MIW can support off chain spending with on chain settlement, using Basis for reserves and redemption, and a pluggable transport starting with Nostr.
+### Intent: describe a simple way MIW can support off chain spending with on chain settlement, using Basis for reserves and redemption, and a pluggable transport starting with Nostr.
 
-Objects to pass around
+**Objects to pass around**
 
-Credit object
-
+**Credit object**
+```
 {
   "note_id": "uuid-or-hash",
   "reserve_id": "ergo-box-or-token-id",
@@ -37,10 +37,10 @@ Credit object
   "nonce": "32B",
   "issuer_sig": "sig-over(note_id||reserve_id||face_value||unit||nonce)"
 }
+```
 
-
-Spend record
-
+**Spend record**
+```
 {
   "note_id": "same",
   "debit": "0.002",
@@ -48,10 +48,10 @@ Spend record
   "spend_nonce": "32B",
   "holder_sig": "sig-over(note_id||debit||spend_nonce)"
 }
+```
 
-
-Optional assignment
-
+**Optional assignment**
+```
 {
   "note_id": "same",
   "from_pubkey": "hex",
@@ -59,10 +59,11 @@ Optional assignment
   "assign_nonce": "32B",
   "from_sig": "sig-over(note_id||to_pubkey||assign_nonce)"
 }
+```
 
+**Batch redeem claim**
 
-Batch redeem claim
-
+```
 {
   "reserve_id": "id",
   "items": [
@@ -71,69 +72,70 @@ Batch redeem claim
   ],
   "tracker_sig": "sig-over-concat(items)"
 }
+```
 
-Double spend defense with Basis
+**Double spend defense with Basis**
 
 At redemption, insert key blake2b256(note_id||spend_nonce) into the Basis AVL tree. Duplicates fail. Basis releases the total after proof checks. On chain stays simple. Off chain stays fast.
 
-MVP loop
+## MVP loop
 
-Mint a small note from a funded Basis reserve, for example 0.10
+* Mint a small note from a funded Basis reserve, for example 0.10
 
-Send it with a normal request or message
+* Send it with a normal request or message
 
-Verify and debit off chain, return the result immediately
+* Verify and debit off chain, return the result immediately
 
-Batch redeem accepted spends to the reserve at the end of the day
+* Batch redeem accepted spends to the reserve at the end of the day
 
-Transport plan
+## Transport plan
 
 Start with Nostr for peer to peer delivery and relay diversity. Keep a tiny interface so transport can be swapped later.
 
-Event kinds
+- Event kinds
 
-30100 publish note
+  - 30100 publish note
 
-30101 assign holder
+  - 30101 assign holder
 
-30102 publish spend
+  - 30102 publish spend
 
-30103 publish redeem claim or pointer to the on chain tx
+  - 30103 publish redeem claim or pointer to the on chain tx
 
-Code interface
+- Code interface
 
-send(obj) and subscribe(type, handler)
+  - send(obj) and subscribe(type, handler)
 
-First adapter uses Nostr relays
+  - First adapter uses Nostr relays
 
-Later add Waku or HTTP without touching money logic
+  - Later add Waku or HTTP without touching money logic
 
-MIW UI mapping
+## MIW UI mapping
 
-Current status: show face value, remaining value, redeemable value by reserve, and liabilities from unredeemed spends
+* Current status: show face value, remaining value, redeemable value by reserve, and liabilities from unredeemed spends
 
-My Wallets: backed uses Basis reserves, non backed uses trust rules off chain, fast is a low friction preset
+* My Wallets: backed uses Basis reserves, non backed uses trust rules off chain, fast is a low friction preset
 
-Circles management: whitelist issuer keys, allow person to person transfers via assignment
+* Circles management: whitelist issuer keys, allow person to person transfers via assignment
 
-Open points to align
+## Open points to align
 
-Units and rounding, use integer cents
+* Units and rounding, use integer cents
 
-Minimum spend size to avoid dust
+* Minimum spend size to avoid dust
 
-Fees at redemption, flat or proportional, who pays
+* Fees at redemption, flat or proportional, who pays
 
-One tracker key or a set of tracker keys for redundancy
+* One tracker key or a set of tracker keys for redundancy
 
-Privacy roadmap, blind signatures later
+* Privacy roadmap, blind signatures later
 
-Proposed next steps
+## Proposed next steps
 
-Finalize the JSON fields and Nostr kinds
+* Finalize the JSON fields and Nostr kinds
 
-Extend the current server to verify and debit notes and to speak Nostr events
+* Extend the current server to verify and debit notes and to speak Nostr events
 
-Fund a Basis reserve on testnet
+* Fund a Basis reserve on testnet
 
-Demo the full loop from mint to spend to batch redeem
+* Demo the full loop from mint to spend to batch redeem
